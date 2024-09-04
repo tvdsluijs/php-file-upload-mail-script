@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theo's Bestanden Upload Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #upload-area {
+            border: 2px dashed #ccc;
+            padding: 50px;
+            text-align: center;
+            background-color: #fff;
+            border-radius: 10px;
+            position: relative;
+        }
+        #upload-area.dragover {
+            border-color: #333;
+        }
+        #upload-area p {
+            margin: 0;
+            font-size: 18px;
+        }
+        #file-input {
+            display: none;
+        }
+        #progress-container {
+            display: none;
+            margin-top: 20px;
+            width: 100%;
+            background-color: #ccc;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        #progress-bar {
+            width: 0;
+            height: 20px;
+            background-color: #4caf50;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="upload-area">
+    <p>Sleep je bestanden hier naartoe of klik om te uploaden</p>
+    <input type="file" id="file-input" multiple>
+    <div id="progress-container">
+        <div id="progress-bar"></div>
+    </div>
+    <div id="status"></div>
+</div>
+
+<script>
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('file-input');
+    const progressBar = document.getElementById('progress-bar');
+    const progressContainer = document.getElementById('progress-container');
+    const statusDiv = document.getElementById('status');
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', (event) => {
+        uploadFiles(event.target.files);
+    });
+
+    uploadArea.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (event) => {
+        event.preventDefault();
+        uploadArea.classList.remove('dragover');
+        uploadFiles(event.dataTransfer.files);
+    });
+
+    function uploadFiles(files) {
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) {
+            formData.append('files[]', files[i]);
+        }
+
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        statusDiv.innerHTML = '';
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'upload.php', true);
+
+        xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+                const percentComplete = (event.loaded / event.total) * 100;
+                progressBar.style.width = percentComplete + '%';
+            }
+        });
+
+        xhr.addEventListener('load', () => {
+            if (xhr.status === 200) {
+                statusDiv.innerHTML = 'Bestanden succesvol geüpload!';
+            } else {
+                statusDiv.innerHTML = 'Er is een fout opgetreden bij het uploaden.';
+            }
+        });
+
+        xhr.addEventListener('error', () => {
+            statusDiv.innerHTML = 'Er is een fout opgetreden bij het uploaden.';
+        });
+
+        xhr.send(formData);
+    }
+</script>
+
+</body>
+</html>
